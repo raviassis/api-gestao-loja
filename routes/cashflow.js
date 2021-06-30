@@ -13,13 +13,10 @@ class CashFlowTypeEnum {
     static OUTGOING = new CashFlowTypeEnum(1, 'Saída');
 
     static getById(id) {
-        if(id === CashFlowTypeEnum.INCOMING.id) {
-            return CashFlowTypeEnum.INCOMING;
-        }
         switch(id) {
-            case CashFlowTypeEnum.INCOMING:
+            case CashFlowTypeEnum.INCOMING.id:
                 return CashFlowTypeEnum.INCOMING;
-            case CashFlowTypeEnum.OUTGOING:
+            case CashFlowTypeEnum.OUTGOING.id:
                 return CashFlowTypeEnum.OUTGOING;
         }
     }
