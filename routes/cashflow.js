@@ -1,20 +1,8 @@
 const router = require('express').Router();
+const { body, query, param } = require('express-validator');
 const db = require('../data');
-const { body, query, param, validationResult } = require('express-validator');
 const constants = require('../util/constants');
-
-const valid = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-  next();
-};
-
-const validationMiddleware = (arr) => {
-  arr.push(valid);
-  return arr;
-};
+const validationMiddleware = require('../middlewares/validationMiddleware');
 
 router.get('/',
     validationMiddleware([
