@@ -33,7 +33,7 @@ router.get('/',
         offset = offset || constants.OFFSET;
         let total = (await db('cashflow').count('*'))[0].count;
         let cashflow = await db('cashflow')
-                                .orderBy([{column: 'datetime', order: 'desc'}])
+                                .orderBy([{column: 'datetime', order: 'desc'}, {column: 'id', order: 'desc'}])
                                 .limit(limit)
                                 .offset(offset);
         cashflow.forEach(c => c.cashFlowType = CashFlowTypeEnum.getById(c.cashFlowType));
