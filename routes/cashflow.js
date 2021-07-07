@@ -10,8 +10,8 @@ class CashFlowTypeEnum {
         this.id = id;
         this.name = name;
     }
-    static INCOMING = new CashFlowTypeEnum(1, 'Entrada');
-    static OUTGOING = new CashFlowTypeEnum(2, 'Saída');
+    static INCOMING = new CashFlowTypeEnum(1, 'Incoming');
+    static OUTGOING = new CashFlowTypeEnum(2, 'Outgoing');
 
     static getById(id) {
         switch(id) {
