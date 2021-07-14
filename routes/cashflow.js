@@ -120,6 +120,21 @@ router.get('/balance',
     })
 );
 
+router.get('/suggestedDescriptions',
+    validationMiddleware([
+        query('description').trim()
+    ]),
+    asyncHandler(async (req, res) => {
+        const { description } = req.query;
+        const result = await db('cashflow')
+                            .whereRaw(`UPPER(description) LIKE ?`, [`%${description.toUpperCase()}%`])
+                            .distinct('description')
+                            .orderBy('description');
+        res.status(constants.http.OK)
+            .json(result);
+    })
+);
+
 router.post(
   '/', 
   validationMiddleware(createCashFlowValidations), 
