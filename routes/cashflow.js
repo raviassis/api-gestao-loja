@@ -129,7 +129,8 @@ router.get('/suggestedDescriptions',
         const result = await db('cashflow')
                             .whereRaw(`UPPER(description) LIKE ?`, [`%${description.toUpperCase()}%`])
                             .distinct('description')
-                            .orderBy('description');
+                            .orderBy('description')
+                            .limit(constants.LIMIT);
         res.status(constants.http.OK)
             .json(result);
     })
