@@ -4,31 +4,8 @@ const { body, query, param } = require('express-validator');
 const db = require('../data');
 const constants = require('../util/constants');
 const validationMiddleware = require('../middlewares/validationMiddleware');
-
-class CashFlowTypeEnum {
-    constructor(id, name) {
-        this.id = id;
-        this.name = name;
-    }
-    static INCOMING = new CashFlowTypeEnum(1, 'Incoming');
-    static OUTGOING = new CashFlowTypeEnum(2, 'Outgoing');
-
-    static getById(id) {
-        switch(id) {
-            case CashFlowTypeEnum.INCOMING.id:
-                return CashFlowTypeEnum.INCOMING;
-            case CashFlowTypeEnum.OUTGOING.id:
-                return CashFlowTypeEnum.OUTGOING;
-        }
-    }
-
-    static list() {
-        return [
-            CashFlowTypeEnum.INCOMING,
-            CashFlowTypeEnum.OUTGOING
-        ];
-    }
-}
+const cashFlowRepository = require('../data/cashFlowRepository');
+const CashFlowTypeEnum = require('../models/cashFlowTypeEnum');
 
 const createCashFlowValidations = [
     body('description').notEmpty().trim().escape().withMessage('Not be empty'),
@@ -76,10 +53,15 @@ router.get('/',
         let { limit, offset, begin, end, cashFlowType } = req.query;
         limit = limit || constants.LIMIT;
         offset = offset || constants.OFFSET;
-        const cashflowquery = filteredCashFlow({begin, end, cashFlowType});
-        let total = (await cashflowquery.clone().count('*'))[0].count;
-        let cashflow = await cashflowquery.clone()
-                                .orderBy([{column: 'datetime', order: 'desc'}, {column: 'id', order: 'desc'}])
+        let total = (await cashFlowRepository
+                            .filteredCashFlow({begin, end, cashFlowType})
+                            .count('*'))[0].count;
+        let cashflow = await cashFlowRepository
+                                .filteredCashFlow({begin, end, cashFlowType})
+                                .orderBy([
+                                    {column: 'datetime', order: 'desc'}, 
+                                    {column: 'id', order: 'desc'}
+                                ])
                                 .limit(limit)
                                 .offset(offset);
         cashflow.forEach(c => c.cashFlowType = CashFlowTypeEnum.getById(c.cashFlowType));
@@ -117,6 +99,25 @@ router.get('/balance',
             cashFlowType,
             balance
         });  
+    })
+);
+
+router.get(
+    '/consolidatedReport',
+    validationMiddleware([
+        query('begin').if(query('begin').exists()).isISO8601().toDate(),
+        query('end').if(query('end').exists()).isISO8601().toDate(),
+    ]),
+    asyncHandler(async (req, res) => {
+        let { begin, end } = req.query;
+        const cashFlow = await cashFlowRepository
+                            .consolidatedReport({begin, end});
+        res.status(constants.http.OK)
+            .json({
+                begin,
+                end,
+                data: cashFlow
+            });
     })
 );
 
