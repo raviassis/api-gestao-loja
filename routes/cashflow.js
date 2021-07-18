@@ -22,21 +22,6 @@ const updateCashFlowValidations = [
     ...createCashFlowValidations
 ];
 
-const filteredCashFlow = ({begin, end, cashFlowType}) => {
-    const query = db('cashflow');
-    if (begin && end)    
-        query.whereBetween('datetime', [begin, end]);
-    else if (begin)
-        query.where('datetime', '>=', begin);
-    else if (end)
-        query.where('datetime', '<=', end);
-
-    if (typeof cashFlowType === 'number')
-        query.where({cashFlowType})
-
-    return query;
-};
-
 router.get('/',
     validationMiddleware([
         query('cashFlowType')
@@ -89,7 +74,7 @@ router.get('/balance',
     ]),
     asyncHandler(async (req, res) => {
         let { begin, end, cashFlowType } = req.query;
-        const cashflowquery = filteredCashFlow({begin, end, cashFlowType});
+        const cashflowquery = cashFlowRepository.filteredCashFlow({begin, end, cashFlowType});
         const incoming = (await cashflowquery.clone().where('cashFlowType', CashFlowTypeEnum.INCOMING.id).sum('value'))[0].sum;
         const outgoing = (await cashflowquery.clone().where('cashFlowType', CashFlowTypeEnum.OUTGOING.id).sum('value'))[0].sum;
         const balance = incoming - outgoing;
