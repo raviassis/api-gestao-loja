@@ -15,10 +15,12 @@ router.get('/',
         let { limit, offset } = req.query;
         limit = limit || constants.LIMIT;
         offset = offset || constants.OFFSET;
+        const total = await recurrentRepository.count();
         const data = await recurrentRepository.list({limit, offset});
         res.status(constants.http.OK).json({
             limit,
             offset,
+            total,
             data
         });
     })

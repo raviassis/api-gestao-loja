@@ -7,6 +7,11 @@ function mapRecurrent(recurrent) {
 }
 const tablename = 'recurrents';
 const recurrentRepository = {
+    count() {
+        return db(tablename)
+                .count('*')
+                .then(res => res[0].count)
+    },
     list({limit, offset}) {
         return db(tablename)
                 .limit(limit)
