@@ -12,10 +12,15 @@ const recurrentRepository = {
                 .count('*')
                 .then(res => res[0].count)
     },
-    list({limit, offset}) {
-        return db(tablename)
-                .limit(limit)
-                .offset(offset)
+    list({where, limit, offset} = {}) {
+        const query = db(tablename);
+        if (where)
+            query.where(where);
+        if (limit)
+            query.limit(limit);
+        if (offset)
+            query.offset(offset)
+        return query
                 .then(result => result.map(mapRecurrent));
     },
     create({description, cashFlowType, value, day}) {

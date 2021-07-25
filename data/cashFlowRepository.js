@@ -28,6 +28,11 @@ const cashFlowRepository = {
                 .groupBy('description', 'cashFlowType')
                 .select('description', 'cashFlowType', db.raw('SUM(value)'))
                 .then(mapCashFlow);
+    },
+    createMany(cashFlowArray) {
+        if(cashFlowArray && Array.isArray(cashFlowArray) && cashFlowArray.length > 0)
+            return db('cashflow').insert(cashFlowArray, '*').then(mapCashFlow);
+        else return new Promise((resolve) => resolve([]));
     }
 };
 
