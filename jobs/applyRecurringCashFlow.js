@@ -13,7 +13,7 @@ function mapRecurrentToCashFlow(recurrent) {
     const cashFlowRepository = require('../data/cashFlowRepository');
     const day = (new Date()).getUTCDate();
     const recurrents = await recurrentRepository
-                                .list({where: {day: 22}});
+                                .list({where: {day}});
     console.log(`Recurrents to apply: ${recurrents.length}`);
     const cashFlows = recurrents.map(mapRecurrentToCashFlow);
     const results = await cashFlowRepository.createMany(cashFlows);
