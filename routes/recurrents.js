@@ -5,7 +5,13 @@ const constants = require('../util/constants');
 const validationMiddleware = require('../middlewares/validationMiddleware');
 const recurrentRepository = require('../data/recurrentRepository');
 const CashFlowTypeEnum = require('../models/cashFlowTypeEnum');
+const authMiddleware = require('../middlewares/authMiddleware');
 
+router.use(authMiddleware);
+
+/**
+ * List recurrents
+ */
 router.get('/',
     validationMiddleware([
         query('limit').toInt(),
@@ -15,8 +21,13 @@ router.get('/',
         let { limit, offset } = req.query;
         limit = limit || constants.LIMIT;
         offset = offset || constants.OFFSET;
-        const total = await recurrentRepository.count();
-        const data = await recurrentRepository.list({limit, offset});
+        const where = { users_id: req.loggedUser.id };
+        const total = await recurrentRepository.count({where});
+        const data = await recurrentRepository.list({
+            where,
+            limit, 
+            offset
+        });
         res.status(constants.http.OK).json({
             limit,
             offset,
@@ -39,22 +50,37 @@ const createRecurrentValidations = [
         .withMessage(`should be between 1 and 28`)
 ];
 
+/**
+ * Create recurrent
+ */
 router.post('/', 
     validationMiddleware(createRecurrentValidations),
     asyncHandler(async (req, res) => {
         const {description, cashFlowType, value, day} = req.body;
-        const result = await recurrentRepository.create({description, cashFlowType, value, day});
+        const result = await recurrentRepository.create({
+            users_id: req.loggedUser.id,
+            description, 
+            cashFlowType, 
+            value, 
+            day
+        });
         res.status(constants.http.CREATED).json(result);
     })
 );
 
+/**
+ * Delete recurrent
+ */
 router.delete('/:id', 
     validationMiddleware([
         param('id').toInt()
     ]),
     asyncHandler(async (req, res) => {
         const {id} = req.params;
-        const result = await recurrentRepository.delete(id);
+        const result = await recurrentRepository.delete({
+            id,
+            users_id: req.loggedUser.id
+        });
         if (result)
             res.status(constants.http.OK).json(result);
         else 

@@ -9,8 +9,8 @@ function mapCashFlow(cashFlowArray) {
 }
 
 const cashFlowRepository = {
-    filteredCashFlow({begin, end, cashFlowType}) {
-        const query = db('cashflow');
+    filteredCashFlow({begin, end, cashFlowType, users_id}) {
+        const query = db('cashflow').where({users_id});
         if (begin && end)    
             query.whereBetween('datetime', [begin, end]);
         else if (begin)
@@ -23,8 +23,8 @@ const cashFlowRepository = {
     
         return query;
     },
-    consolidatedReport({begin, end}) {
-        return this.filteredCashFlow({begin, end})
+    consolidatedReport({begin, end, users_id}) {
+        return this.filteredCashFlow({begin, end, users_id})
                 .groupBy('description', 'cashFlowType')
                 .select('description', 'cashFlowType', db.raw('SUM(value)'))
                 .then(mapCashFlow);

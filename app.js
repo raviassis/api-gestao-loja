@@ -2,7 +2,13 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-const cors = require('cors')
+const cors = require('cors');
+const db = require('./data');
+
+(async function() {
+    await db.migrate.latest();
+})().catch(console.log);
+
 
 
 var indexRouter = require('./routes/');
