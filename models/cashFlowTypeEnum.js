@@ -1,8 +1,5 @@
-module.exports = class CashFlowTypeEnum {
-    constructor(id, name) {
-        this.id = id;
-        this.name = name;
-    }
+const BaseEnum = require('./BaseEnum');
+module.exports = class CashFlowTypeEnum extends BaseEnum {
     static INCOMING = new CashFlowTypeEnum(1, 'Incoming');
     static OUTGOING = new CashFlowTypeEnum(2, 'Outgoing');
 

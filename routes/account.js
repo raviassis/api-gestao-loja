@@ -6,6 +6,9 @@ const userService = require('../services/userServices');
 const validationMiddleware = require('../middlewares/validationMiddleware');
 const authMiddleware = require('../middlewares/authMiddleware');
 const authService = require('../services/authService');
+const db = require('../data/index');
+const UserConfig = require('../models/UserConfig');
+const userRepository = require('../data/userRepository');
 
 router.use(authMiddleware);
 
@@ -14,6 +17,16 @@ router.get(
     asyncHandler(async (req, res) => {
         const { id, name, email, balance } = await userService.getUserById(req.loggedUser.id);
         res.status(constants.http.OK).json({ id, name, email, balance });
+    })
+);
+
+router.get(
+    '/me/config', 
+    asyncHandler(async (req, res) => {
+        res.status(constants.http.OK)
+            .json(
+                await userRepository.getUserConfig(req.loggedUser.id)
+            );
     })
 );
 

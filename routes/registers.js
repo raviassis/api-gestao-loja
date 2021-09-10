@@ -1,13 +1,27 @@
 const router = require('express').Router();
 const db = require('../data');
-const { body } = require('express-validator');
+const { body, param } = require('express-validator');
 const validationMiddleware = require('../middlewares/validationMiddleware');
 const registerService = require('../services/registerService'); 
 const constants = require('../util/constants');
 const authMiddleware = require('../middlewares/authMiddleware');
-const asyncHandler = require('express-async-handler')
+const asyncHandler = require('express-async-handler');
+const userRepository = require('../data/userRepository');
+const TypeRegisterDescriptionEnum = require('../models/TypeRegisterDescriptionEnum');
+const DomainException = require('../util/exceptions/domainException');
 
 router.use(authMiddleware);
+
+/**
+ * TypeRegisterDescriptionFeatureMiddle
+ */
+router.use(asyncHandler(async (req, res, next) => {
+  const userConfig = await userRepository.getUserConfig(req.loggedUser.id);
+  if (userConfig.typeRegisterDescription.id === TypeRegisterDescriptionEnum.DEFINED_DESCRIPTIONS.id )
+    next();
+  else 
+    throw new DomainException("Feature DEFINED_DESCRIPTIONS is disabled!");
+}));
 
 router.get(
     '/', 
@@ -17,11 +31,8 @@ router.get(
         q = q || '';
         limit = limit || 10;
         offset = offset || 0;
-        const registers = await db('registers')
-                                .where({users_id: id})
-                                .whereRaw(`UPPER(CONCAT(code, ' ', name)) like '%${ q.toUpperCase() }%'`)
-                                .limit(limit)
-                                .offset(offset);
+        const registers = await registerService.listRegisters({users_id: id, q, limit, offset});
+        
         res.status(constants.http.OK).json({
           q,
           limit,
@@ -31,18 +42,37 @@ router.get(
     })
 );
 
-// router.post(
-//   '/', 
-//   validationMiddleware([
-//     body('code').notEmpty(),
-//     body('name').notEmpty()
-//   ]), 
-//   async (req, res) => {
-//     const {code, name} = req.body;
-//     const result = await registerService
-//                             .createRegister(req.loggedUser, {code, name});
-//     res.status(constants.http.CREATED).json(result);
-//   }
-// );
+router.post(
+  '/', 
+  validationMiddleware([
+    body('code')
+      .notEmpty().withMessage('not be empty')
+      .isLength({max: 10}).withMessage('should be less than 10 caracters'),
+    body('name')
+      .notEmpty().withMessage('not be empty')
+  ]), 
+  asyncHandler(async (req, res) => {
+    res.status(constants.http.CREATED)
+        .json(
+          await registerService
+                  .createRegister(req.loggedUser, req.body)
+        );
+  })
+);
+
+router.delete(
+  '/:code', 
+  validationMiddleware([
+    param('code')
+      .notEmpty().withMessage('not be empty')
+      .isLength({max: 10}).withMessage('should be less than 10 caracters')
+  ]), 
+  asyncHandler(async (req, res) => {
+    const { code } = req.params;
+    await registerService
+                  .deleteRegister({ users_id: req.loggedUser.id, code})
+    res.status(constants.http.OK);
+  })
+);
 
 module.exports = router;
