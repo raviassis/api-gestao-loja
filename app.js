@@ -9,8 +9,6 @@ const db = require('./data');
     await db.migrate.latest();
 })().catch(console.log);
 
-
-
 var indexRouter = require('./routes/');
 
 var app = express();

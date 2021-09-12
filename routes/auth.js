@@ -7,8 +7,7 @@ const validationMiddleware = require('../middlewares/validationMiddleware');
 const authService = require('../services/authService');
 const authMiddleware = require('../middlewares/authMiddleware');
 
-router.post(
-    '/register', 
+router.post('/register', 
     validationMiddleware([
         body('email').isEmail().withMessage('should be a email'),
         body('name').notEmpty().withMessage('not be empty'),
@@ -21,8 +20,18 @@ router.post(
     })
 );
 
-router.post(
-    '/login',
+router.post('/email_confirmation/:confirmation_token',
+    validationMiddleware([
+        param('confirmation_token').notEmpty().withMessage('not be empty'),
+    ]),
+    asyncHandler(async (req, res) => {
+        const { confirmation_token } = req.params;
+        await authService.confirmEmail(confirmation_token);
+        res.sendStatus(constants.http.OK);
+    })
+);
+
+router.post('/login',
     validationMiddleware([
         body('email').isEmail().withMessage('should be a email'),
         body('password').isStrongPassword().withMessage('password is not strong enough')
@@ -34,8 +43,7 @@ router.post(
     })
 );
 
-router.post(
-    '/request_reset_password',
+router.post('/request_reset_password',
     validationMiddleware([
         body('email').isEmail().withMessage('should be a email'),
     ]),
@@ -46,8 +54,7 @@ router.post(
     })
 );
 
-router.post(
-    '/reset_password/:reset_token',
+router.post('/reset_password/:reset_token',
     validationMiddleware([
         param('reset_token').notEmpty().withMessage('not be empty'),
         body('newPassword')

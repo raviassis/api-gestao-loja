@@ -30,6 +30,14 @@ const authService = {
                             .first('*')
                             .then(res => res ? new User(res): res);
         if (user && user.validPassword(password)) {
+            const email_confirmation = await db('email_confirmation')
+                                                .where({
+                                                    users_id: user.id
+                                                })
+                                                .whereNotNull('confirmation_date')
+                                                .first('*');
+            if (!email_confirmation) 
+                throw new DomainException('A conta ainda não foi confirmada', constants.http.UNAUTHORIZED);
             const token = jwt.sign(
                 authenticatedUser(user), 
                 process.env.APP_SECRET, 
@@ -39,7 +47,7 @@ const authService = {
             );
             return {token}
         } else {
-            throw new DomainException('Invalid credentials', constants.http.UNAUTHORIZED);
+            throw new DomainException('Credenciais inválidas', constants.http.UNAUTHORIZED);
         }
     },
     async changePassword({id, password, newPassword}) {
@@ -69,6 +77,20 @@ const authService = {
             throw new DomainException('request not found', constants.http.NOT_FOUND);
         userResetPassword.setPassword(newPassword);
         await db.transaction(saveUserAndDeleteResetPasswordRequest.bind(null, userResetPassword));
+    },
+    async confirmEmail(confirmation_token) {
+        const email_confirmation = await db('email_confirmation')
+                                            .where({
+                                                confirmation_token
+                                            })
+                                            .first('*');
+        if(!email_confirmation)
+            throw new DomainException('Email not found', constants.http.NOT_FOUND);
+        if (email_confirmation.confirmation_date) return;
+        email_confirmation.confirmation_date = new Date();
+        await db('email_confirmation')
+                .where({users_id: email_confirmation.users_id})
+                .update(email_confirmation);
     }
 };
 

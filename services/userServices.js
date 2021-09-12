@@ -2,6 +2,8 @@ const db = require('../data/index');
 const DomainException = require('../util/exceptions/domainException');
 const User = require('../models/user');
 const userRepository = require('../data/userRepository');
+const mailSerice = require('./mailService');
+const crypto = require('crypto');
 
 class ConfigVM {
     constructor({users_id, typeRegisterDescription}){
@@ -50,6 +52,22 @@ const userService = {
         return db.transaction(async (trx) => {
             const ids = await trx('users').insert(user, 'id');
             await trx('users_configs').insert({users_id: ids[0]});
+            let emailConfirmation = {
+                users_id: ids[0],
+                send_date: new Date(),
+                confirmation_token: crypto.randomBytes(16).toString('hex')
+            };
+            await mailSerice.sendEmail({
+                to: email, 
+                subject: 'Confirme seu email',
+                text: `
+                    Olá ${name}.
+                    Por favor, confirme seu endereço de email clicando no link abaixo
+                    para finalizar seu cadastro.
+                    ${process.env.APP_FRONTEND_URL}/email_confirmation/${emailConfirmation.confirmation_token}                    
+                `
+            });
+            await trx('email_confirmation').insert(emailConfirmation);
             return await this.getUserByIdWithUserConfig(ids[0], trx);
         });
     },
