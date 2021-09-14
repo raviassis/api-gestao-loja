@@ -39,7 +39,7 @@ const authService = {
                                                 .whereNotNull('confirmation_date')
                                                 .first('*');
             if (!email_confirmation) 
-                throw new DomainException('A conta ainda não foi confirmada', constants.http.UNAUTHORIZED);
+                throw new DomainException('A conta de email ainda não foi confirmada.', constants.http.UNAUTHORIZED);
             const token = jwt.sign(
                 authenticatedUser(user), 
                 process.env.APP_SECRET, 
