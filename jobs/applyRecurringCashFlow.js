@@ -1,11 +1,12 @@
 function mapRecurrentToCashFlow(recurrent) {
-    const {id, description, cashFlowType, value} = recurrent;
+    const {id, description, cashFlowType, value, users_id} = recurrent;
     return {
         description,
         cashFlowType: cashFlowType.id,
         value,
         datetime: new Date(),
-        recurrents_id: id
+        recurrents_id: id,
+        users_id
     }
 }
 (async() => {

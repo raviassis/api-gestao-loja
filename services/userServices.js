@@ -2,7 +2,7 @@ const db = require('../data/index');
 const DomainException = require('../util/exceptions/domainException');
 const User = require('../models/user');
 const userRepository = require('../data/userRepository');
-const mailSerice = require('./mailService');
+const emailConfirmationService = require('./emailConfirmationService');
 const crypto = require('crypto');
 
 class ConfigVM {
@@ -57,16 +57,7 @@ const userService = {
                 send_date: new Date(),
                 confirmation_token: crypto.randomBytes(16).toString('hex')
             };
-            await mailSerice.sendEmail({
-                to: email, 
-                subject: 'Confirme seu email',
-                text: `
-                    Olá ${name}.
-                    Por favor, confirme seu endereço de email clicando no link abaixo
-                    para finalizar seu cadastro.
-                    ${process.env.APP_FRONTEND_URL}/email_confirmation/${emailConfirmation.confirmation_token}                    
-                `
-            });
+            await emailConfirmationService.send({email, name, confirmation_token: emailConfirmation.confirmation_token})
             await trx('email_confirmation').insert(emailConfirmation);
             return await this.getUserByIdWithUserConfig(ids[0], trx);
         });

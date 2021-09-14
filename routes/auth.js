@@ -20,6 +20,17 @@ router.post('/register',
     })
 );
 
+router.post('/resend_email_confirmation',
+    validationMiddleware([
+        body('email').isEmail().withMessage('should be a email'),
+    ]),
+    asyncHandler(async (req, res) => {
+        const { email } = req.body;
+        await authService.resendEmail(email);
+        res.sendStatus(constants.http.OK);
+    })
+);
+
 router.post('/email_confirmation/:confirmation_token',
     validationMiddleware([
         param('confirmation_token').notEmpty().withMessage('not be empty'),
@@ -49,8 +60,8 @@ router.post('/request_reset_password',
     ]),
     asyncHandler(async (req, res) => {
         const {email} = req.body;
-        const result = await authService.generateResetPasswordToken({email});
-        res.status(constants.http.OK).json(result);
+        await authService.requestResetPassword({email});
+        res.sendStatus(constants.http.OK);
     })
 );
 

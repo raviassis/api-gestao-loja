@@ -5,6 +5,8 @@ const constants = require('../util/constants');
 const DomainException = require('../util/exceptions/domainException');
 const userRepository = require('../data/userRepository');
 const crypto = require('crypto');
+const emailConfirmationService = require('./emailConfirmationService');
+const mailSerice = require('./mailService');
 
 function authenticatedUser({id, name, email}) {
     return {id, name, email};
@@ -59,17 +61,25 @@ const authService = {
         user.setPassword(newPassword);
         await db('users').where({id}).update(user);
     },
-    async generateResetPasswordToken({ email }) {
+    async requestResetPassword({ email }) {
         const user = await db('users').where({ email }).first('*');
-        if (!user) return {};
-        const resetPasswordRequest = await db('reset_password_requests')
-                                        .insert({
-                                            users_id: user.id,
-                                            reset_token: crypto.randomBytes(16).toString('hex')
-                                        }, 'reset_token')
-                                        .then(res => { return { reset_token: res[0] }; });
-                                        
-        return resetPasswordRequest;
+        if (!user) return;
+        const reset_password_request = {
+            users_id: user.id,
+            reset_token: crypto.randomBytes(16).toString('hex')
+        };
+        await mailSerice.sendEmail({
+            to: email, 
+            subject: 'Reset de senha',
+            text: `
+                Olá ${user.name}.
+                Recebemos uma solicitação para redefinir sua senha.
+                Clique no link abaixo para configurar sua nova senha.
+                ${process.env.APP_FRONTEND_URL}/reset_password/${reset_password_request.reset_token}                    
+            `
+        });
+        await db('reset_password_requests')
+                .insert(reset_password_request);
     },
     async resetPassword({reset_token, newPassword}) {
         const userResetPassword = await getUserAndResetPasswordRequestsByResetToken(reset_token);
@@ -89,8 +99,18 @@ const authService = {
         if (email_confirmation.confirmation_date) return;
         email_confirmation.confirmation_date = new Date();
         await db('email_confirmation')
-                .where({users_id: email_confirmation.users_id})
+                .where({users_id: email_confirmation.users_id, confirmation_token})
                 .update(email_confirmation);
+    },
+    async resendEmail(email) {
+        const email_confirmation = db('users')
+                                    .innerJoin('email_confirmation', 'users.id', 'email_confirmation.users_id')
+                                    .where({email})
+                                    .first('*');
+        if (!email_confirmation)
+            throw new DomainException('Email não encontrado', constants.http.NOT_FOUND);
+        const {name, confirmation_token} = email_confirmation;
+        await emailConfirmationService.send({email, name, confirmation_token});
     }
 };
 
